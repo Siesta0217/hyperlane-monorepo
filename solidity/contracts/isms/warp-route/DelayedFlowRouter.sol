@@ -46,6 +46,9 @@ import {TokenRouter} from "../../token/libs/TokenRouter.sol";
  * design — donating to grow the cap also funds the pool that the cap is
  * gating, so the attacker pays for any drain-headroom they unlock.
  *
+ * The refill window (`DURATION`) is set at construction so each deployment
+ * can pick the cadence that suits its risk model.
+ *
  * Compose with `PausableIsm` via `StaticAggregationIsm` so watchers can kill
  * delivery during the delay window. See `docs/delayed-flow-router.md` for
  * the recommended composition order.
@@ -108,10 +111,12 @@ contract DelayedFlowRouter is TimelockRouter, RateLimited {
     constructor(
         TokenRouter _warpRouter,
         uint256 _thresholdBps,
-        uint48 _maxDelay
+        uint48 _maxDelay,
+        uint256 _refillWindow
     )
         TimelockRouter(address(_warpRouter.mailbox()), 0)
-        RateLimited(0) // capacity derived dynamically; storage refillRate unused
+        // capacity derived dynamically; storage refillRate unused
+        RateLimited(0, _refillWindow)
     {
         if (_thresholdBps > BPS_DENOMINATOR) revert InvalidThresholdBps();
         warpRouter = address(_warpRouter);
