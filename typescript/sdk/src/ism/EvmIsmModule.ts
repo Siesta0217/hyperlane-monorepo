@@ -147,23 +147,11 @@ export class EvmIsmModule extends HyperlaneModule<
     // Check if we need to deploy a new ISM
     //
     // Special case: RATE_LIMITED recipient is immutable — must redeploy if it changes.
-    // read() omits recipient (immutable constructor arg), so fetch on-chain to compare.
-    let rateLimitedRecipientChanged = false;
-    if (
+    const rateLimitedRecipientChanged =
       typeof normalizedCurrentConfig !== 'string' &&
       normalizedCurrentConfig.type === IsmType.RATE_LIMITED &&
       normalizedTargetConfig.type === IsmType.RATE_LIMITED &&
-      normalizedTargetConfig.recipient !== undefined
-    ) {
-      const onChainRecipient = (
-        await RateLimitedIsm__factory.connect(
-          this.args.addresses.deployedIsm,
-          this.multiProvider.getProvider(this.chain),
-        ).recipient()
-      ).toLowerCase();
-      rateLimitedRecipientChanged =
-        onChainRecipient !== normalizedTargetConfig.recipient;
-    }
+      normalizedCurrentConfig.recipient !== normalizedTargetConfig.recipient;
     if (
       rateLimitedRecipientChanged ||
       typeof normalizedCurrentConfig === 'string' ||
